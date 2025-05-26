@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
+</head>
+<body class="bg-success">
+
+    <div class="container-fluid bg-success d-flex align-items-center justify-content-center min-vh-100">
+        <div class="bg-light p-5 rounded shadow-lg text-center">
+            <h1 class="fw-bold font-monospace">Login</h1>
+            <p class="text-start font-monospace mb-3">Username:</p>
+            <input class="form-control mb-4" type="text" id="username" placeholder="Enter your username...">
+            <p class="text-start font-monospace mb-2">Password:</p>
+            <input class="form-control mb-4" type="password" id="password" placeholder="Enter your password...">
+            <button type="button" class="float-end btn btn-outline-secondary font-monospace" onclick="login()">Enter</button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js')}}"></script>
+
+    <!-- Login Script -->
+    <script>
+    function login() {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        if (!username || !password) {
+            alert("Please enter both username and password.");
+            return;
+        }
+
+        fetch("/check-user", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username: username, password: password }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = "/home";
+            } else {
+                alert(data.message || "Login failed. Check your credentials.");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("An error occurred. Please try again.");
+        });
+    }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+/* PSEUDO-CLASS - state of an element*/
+
+h1 {
+    background-color: bisque;
+
+}
+
+h1:hover {
+    background-color:rgb(227, 64, 154);
+    height: 200px;
+
+}
+a {
+    color:rgb(0, 0, 0);
+}
+a:hover {
+    color:rgb(47, 134, 255);
+
+}
+.social-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.social-bar a {
+    display: inline;
+    text-align: center;
+    padding: 15px;
+    transition: all 0.4s ease;
+    color: white;
+    font-size: 20px;
+    border-radius: 50%
+}
+.social-bar a:hover {
+    background-color: rgb (6, 1, 1);
+}
+button {
+    padding: 10px 20px;
+    margin: 10px;
+    font-family:Georgia, 'Times New Roman', Times, serif;
+    font-size: 16px;
+    border: none;
+    background-color: #1fab0c;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.4s;
+}
+
+button:hover {
+    background-color: #ffde0a;
+}
+a1 {
+    color:rgb(0, 0, 0);
+}
+a1:hover {
+    color:rgb(255, 255, 255);
+
+}
+button1 {
+    padding: 10px 20px;
+    margin: 10px;
+    font-family:Georgia, 'Times New Roman', Times, serif;
+    font-size: 16px;
+    border: none;
+    background-color: #1228f1;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.4s;
+}
+
+button1:hover {
+    background-color: #082391;
+}

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Attendance Record</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+
+        /* Topbar - fixed */
+        .topbar {
+            background-color: #198754;
+            color: white;
+            padding: 0.5rem 1rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1001;
+            height: 50px;
+        }
+
+        .burger {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .topbar-title {
+            margin: 0 auto;
+            text-align: center;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #198754;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: all 0.3s;
+            z-index: 999;
+            padding-top: 60px;
+        }
+
+        .sidebar.show {
+            left: 0;
+        }
+
+        .sidebar .nav-link {
+            padding: 10px 20px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-radius: 0 25px 25px 0;
+            color: white;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: #595b59;
+            color: #fff;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: #146c43;
+            font-weight: bold;
+            color: #fff !important;
+        }
+
+        /* Main content */
+        .content {
+            font-family: monospace;
+            margin-top: 50px;
+            margin-left: 0;
+            padding: 1.5rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content.shifted {
+            margin-left: 250px;
+        }
+
+        /* Card box styling */
+        .card-box {
+            background: white;
+            padding: 20px;
+            border-radius: 1rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        /* Dot styles */
+        .dot {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background-color 0.3s, border-color 0.3s;
+            margin: 0 1px;
+        }
+
+        .dot-green {
+            background-color: #4caf50;
+            border-color: transparent;
+        }
+
+        .dot-yellow {
+            background-color: #ffeb3b;
+            border-color: transparent;
+        }
+
+        .dot-absent {
+            background-color: transparent;
+            border: 1px solid #ccc;
+        }
+
+        /* Red color for weekend days and dots */
+        .weekend-day {
+            color: red !important;
+            font-weight: bold;
+        }
+
+        .dot.weekend {
+            border-color: red !important;
+            cursor: default;
+        }
+
+        /* Label for In and Out above dots */
+        .in-out-labels {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 2px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .in-label {
+            color: #4caf50;
+        }
+
+        .out-label {
+            color: #ffeb3b;
+        }
+
+        /* Toast positioning */
+        #saveToast {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1100;
+        }
+
+        /* Present count badge in header */
+        .present-count {
+            display: block;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            color: #155724;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Topbar -->
+    <div class="topbar d-flex align-items-center justify-content-start px-3">
+        <span class="burger me-3" onclick="toggleSidebar()">☰</span>
+        <h5 class="topbar-title flex-grow-1 text-center">Employee Management System</h5>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+        <ul class="nav flex-column font-monospace">
+            <li class="nav-item"><a class="nav-link {% if request.path == '/home' %}active{% endif %}" href="/home">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.path == '/employee-list' %}active{% endif %}" href="/employee-list">Employee List</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.path == '/attendance_record' %}active{% endif %}" href="/attendance_record">Attendance Record</a></li>
+            <li class="nav-item"><a class="nav-link {% if request.path == '/automated_payroll' %}active{% endif %}" href="/automated_payroll">Automated Payroll</a></li>
+            <li class="nav-item"><a class="nav-link text-danger" href="/logout">Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <main class="content" id="mainContent">
+        <h5 class="mb-0 flex-grow-1 d-flex justify-content-between align-items-center">
+            Attendance Record - {{ month }} {{ year }}
+            <a href="#" id="toggleHistoryLink" class="btn btn-link" style="font-size: 0.9rem;">View History Record ▼</a>
+        </h5>
+
+        <!-- History View -->
+        <div id="historyCollapse" class="collapse mt-3 mb-4"
+             style="border: 1px solid #198754; border-radius: 8px; background: #e9f5ec; padding: 1rem; max-height: 300px; overflow-y: auto;">
+            {% if history_records|length == 0 %}
+            <p class="mb-0 text-muted">No past attendance records found.</p>
+            {% else %}
+            <div class="accordion" id="historyAccordion">
+                {% for record in history_records %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{ loop.index }}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse{{ loop.index }}" aria-expanded="false"
+                                aria-controls="collapse{{ loop.index }}">
+                            {{ record.month }} {{ record.year }}
+                        </button>
+                    </h2>
+                    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
+                         aria-labelledby="heading{{ loop.index }}" data-bs-parent="#historyAccordion">
+                        <div class="accordion-body p-2">
+                            <ul class="list-group list-group-flush" style="max-height: 150px; overflow-y: auto;">
+                                {% for hist_emp in record.employees %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                                    <span>{{ hist_emp.fname }} {{ hist_emp.lname }}</span>
+                                    {% if hist_emp.present %}
+                                    <span class="dot dot-green" title="Present"></span>
+                                    {% else %}
+                                    <span class="dot dot-absent" title="Absent"></span>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+<!-- Attendance Form -->
+<form id="attendanceForm">
+    <div class="card-box">
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle text-center">
+                <thead class="table-success">
+                    <tr>
+                        <th>Employee</th>
+                        <th>Position</th>
+                        <th>Office</th>
+                        {% for day in day_headers %}
+                        {% set is_weekend = day.weekday in [5,6] %}
+                        <th class="{{ 'weekend-day' if is_weekend else '' }}"
+                            title="{{ day.date.strftime('%A, %b %d, %Y') }}">
+                            {{ day.date.day }}<br><small>{{ day.date.strftime('%a') }}</small><br>
+                            <span class="present-count">{{ attendance_counts.get(day.date.strftime('%Y-%m-%d'), 0) }}</span>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th colspan="3"></th>
+                        {% for day in day_headers %}
+                        <th>
+                            <div class="in-out-labels">
+                                <span class="in-label">In</span>
+                                <span class="out-label">Out</span>
+                            </div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td class="text-start">{{ emp.fname }} {{ emp.lname }}</td>
+                        <td>{{ emp.position }}</td>
+                        <td>{{ emp.office }}</td>
+                        {% for day in day_headers %}
+                        {% set is_weekend = day.weekday in [5,6] %}
+                        {% set day_str = day.date.strftime('%Y-%m-%d') %}
+                        {% set attendance_in = attendance_data.get(emp.id, {}).get(day_str, {}).get('in') %}
+                        {% set attendance_out = attendance_data.get(emp.id, {}).get(day_str, {}).get('out') %}
+                        <td>
+                            {% if is_weekend %}
+                            <div class="d-flex justify-content-center gap-1">
+                                <span class="dot weekend dot-absent" title="Weekend"></span>
+                                <span class="dot weekend dot-absent" title="Weekend"></span>
+                            </div>
+                            {% else %}
+                            <div class="d-flex justify-content-center gap-1">
+                                <span class="dot {% if attendance_in == 'present' %}dot-green{% elif attendance_in == 'late' %}dot-yellow{% else %}dot-absent{% endif %}"
+                                      data-emp="{{ emp.id }}" data-date="{{ day_str }}" data-type="in"
+                                      title="Click to toggle In attendance" onclick="toggleAttendance(event)"></span>
+                                <span class="dot {% if attendance_out == 'present' %}dot-green{% elif attendance_out == 'early' or attendance_out == 'late' %}dot-yellow{% else %}dot-absent{% endif %}"
+                                      data-emp="{{ emp.id }}" data-date="{{ day_str }}" data-type="out"
+                                      title="Click to toggle Out attendance" onclick="toggleAttendance(event)"></span>
+                            </div>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-success mt-3">Save Attendance</button>
+    </div>
+</form>
+</main>
+
+<!-- Toast -->
+<div class="toast align-items-center text-white bg-success border-0" id="saveToast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+        <div class="toast-body">Attendance saved successfully!</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('mainContent');
+        sidebar.classList.toggle('show');
+        content.classList.toggle('shifted');
+    }
+
+    // Toggle attendance history visibility
+    document.getElementById("toggleHistoryLink").addEventListener("click", function (e) {
+        e.preventDefault();
+        const history = document.getElementById("historyCollapse");
+        history.classList.toggle("show");
+        this.textContent = history.classList.contains("show") ? "Hide History Record ▲" : "View History Record ▼";
+    });
+
+    // Dot toggle: absent → present → late → back to absent
+    function toggleAttendance(event) {
+        const dot = event.target;
+        if (dot.classList.contains('weekend')) return;
+
+        if (dot.classList.contains('dot-absent')) {
+            dot.classList.replace('dot-absent', 'dot-green');
+            dot.title = 'Present';
+        } else if (dot.classList.contains('dot-green')) {
+            dot.classList.replace('dot-green', 'dot-yellow');
+            dot.title = 'Late';
+        } else {
+            dot.classList.replace('dot-yellow', 'dot-absent');
+            dot.title = 'Absent';
+        }
+    }
+
+    // Handle attendance form submit
+    document.getElementById("attendanceForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const attendanceData = {};
+        document.querySelectorAll('.dot').forEach(dot => {
+            if (dot.classList.contains('weekend')) return;
+            const empId = dot.dataset.emp;
+            const date = dot.dataset.date;
+            const type = dot.dataset.type;
+
+            if (!attendanceData[empId]) attendanceData[empId] = {};
+            if (!attendanceData[empId][date]) attendanceData[empId][date] = {};
+
+            attendanceData[empId][date][type] =
+                dot.classList.contains('dot-green') ? 'present' :
+                dot.classList.contains('dot-yellow') ? 'late' : 'absent';
+        });
+
+        fetch('/save_attendance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(attendanceData)
+        })
+        .then(response => response.ok ? showToast() : alert('Failed to save attendance.'))
+        .catch(() => alert('Error sending attendance data.'));
+    });
+
+    function showToast() {
+        const toast = new bootstrap.Toast(document.getElementById('saveToast'));
+        toast.show();
+    }
+</script>
+
+</html>

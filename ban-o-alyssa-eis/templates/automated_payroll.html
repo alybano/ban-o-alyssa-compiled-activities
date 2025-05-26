@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Automated Payroll</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            margin: 0;
+            font-family: monospace;
+        }
+
+        .topbar {
+            background-color: #198754;
+            color: white;
+            padding: 0.5rem 1rem;
+            position: fixed;
+            width: 100%;
+            z-index: 1001;
+            height: 50px;
+        }
+
+        .burger {
+            cursor: pointer;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            color: white;
+        }
+
+        .topbar h5 {
+            margin: 0;
+            position: absolute;
+            left: 600px;
+            z-index: 999;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color:#198754;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: all 0.3s;
+            z-index: 999;
+            padding-top: 60px;
+        }
+
+        .sidebar.show {
+            left: 0;
+        }
+
+        .sidebar .nav-link {
+            padding: 10px 20px;
+            display: block;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-radius: 0 25px 25px 0;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: #595b59;
+            color: #fff;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: #146c43;
+            font-weight: bold;
+            color: #fff !important;
+        }
+
+        .content {
+            margin-left: 0;
+            transition: margin-left 0.3s;
+            padding: 80px 20px 20px 20px;
+        }
+
+        .content.shifted {
+            margin-left: 250px;
+        }
+
+        .card-box {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-success {
+            background-color: #198754;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: #146c43;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar d-flex align-items-center">
+        <button class="burger me-3" id="toggleSidebar">☰</button>
+        <h5 class="m-0 fw-bold">Employee Management System</h5>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <a href="/home" class="nav-link">Dashboard</a>
+        <a href="/employee-list" class="nav-link">Employee List</a>
+        <a href="/attendance_record" class="nav-link">Attendance Record</a>
+        <a href="/automated_payroll" class="nav-link active">Payroll</a>
+        <a href="/logout" class="nav-link text-danger">Logout</a>
+    </div>
+
+    <div class="content" id="mainContent">
+         <h5 class="m-0 mb-3 fw-bold">Payroll Summary for {{ month }}/{{ year }}</h5>
+         <div class="card-box">
+              <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-success">
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Employee Name</th>
+                            <th>Base Salary</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Late</th>
+                            <th>Early Leave</th>
+                            <th>Total Deduction</th>
+                            <th>Net Salary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in payroll_data %}
+                        <tr>
+                            <td>{{ emp.employee_id }}</td>
+                            <td>{{ emp.name }}</td>
+                            <td>₱30,000.00</td>
+                            <td>{{ emp.present }}</td>
+                            <td>{{ emp.absent }}</td>
+                            <td>{{ emp.late }}</td>
+                            <td>{{ emp.early }}</td>
+                            <td>
+                                {% if emp.deduction is defined %}
+                                    ₱{{ "{:,.2f}".format(emp.deduction) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if emp.net_salary is defined %}
+                                    ₱{{ "{:,.2f}".format(emp.net_salary) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <form method="POST" action="/automated_payroll">
+                <input type="hidden" name="month" value="{{ month }}">
+                <input type="hidden" name="year" value="{{ year }}">
+                <button type="submit" class="btn btn-success">Generate Payroll</button>
+
+                {% if payroll_data and payroll_data[0].get('net_salary') is not none %}
+                <a href="{{ url_for('download_payroll', month=month, year=year) }}" class="btn btn-secondary">Save as File</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("toggleSidebar").addEventListener("click", function () {
+            const sidebar = document.getElementById("sidebar");
+            const content = document.getElementById("mainContent");
+            sidebar.classList.toggle("show");
+            content.classList.toggle("shifted");
+        });
+    </script>
+</body>
+</html>

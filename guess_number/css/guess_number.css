@@ -1,0 +1,70 @@
+
+body {
+    font-size: 25px;
+    font-family: 'Times New Roman', Times, serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin: 25px;
+    background: linear-gradient(to right, rgb(56, 52, 52), rgb(186, 180, 180) );
+}
+
+.game-container{
+    margin: 25px;
+    padding: 25px;
+    border: 5px transparent;
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+    width: 500px;
+    height: 600px;
+    background-image: url('../images/background.jpeg');
+    background-position: center;
+    background-size: 100% 100%;  
+}
+
+h1 {
+    margin:25px;
+    font-size: 40px;
+    text-align: center;
+    font-family: "Footlight MT Light", cursive;
+
+}
+
+input {
+    width: 80%;
+    padding: 15px;
+    margin: 10px 0;
+    border: 1px solid #a8a8a8;
+    border-radius: 5px;
+    text-align: center;
+}
+
+button {
+    padding: 10px 15px;
+    margin:15px;
+    width: 100px;
+    background-color: #5b3a6b;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #bf86e5;
+    
+}
+
+#message {
+    font-size: 18px;
+    margin: 10px 0;
+    text-align: left;
+    
+}
+
+#tries {
+    font-weight: bold;
+    font-size: 20px;
+    text-align: left;
+    
+}

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
+    <style>
+        .employee-fixed-box {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 1200px;
+            z-index: 1000;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+
+        .employee-fixed-box table {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body class="bg-success">
+    <!-- Topbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="attendance.html">Attendance Record</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="employee_status.html">Employee Status</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Fixed Employee Box -->
+    <div class="employee-fixed-box bg-light p-4 rounded shadow-lg text-center">
+        <h1 class="fw-bold font-monospace mb-4">EMPLOYEE INFORMATION<br>SYSTEM</h1>
+        <input class="mb-4 control-form w-75" type="text" id="search" placeholder="Search">
+        <button type="button" class="float-end btn btn-outline-secondary font-monospace" data-bs-toggle="modal"
+            data-bs-target="#myModal">
+            Add
+        </button>
+
+        <table class="table table-striped table-hover table-bordered">
+            <thead>
+                <tr>
+                    <th class="font-monospace">Employee ID</th>
+                    <th class="font-monospace">Last Name</th>
+                    <th class="font-monospace">First Name</th>
+                    <th class="font-monospace">Position</th>
+                    <th class="font-monospace">Office</th>
+                    <th class="font-monospace">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="employeeTableBody">
+            </tbody>
+        </table>
+
+        <!-- The Modal -->
+        <div class="modal fade" id="myModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header font-monospace">
+                        <h4 class="modal-title">EMS</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body bg-success">
+                        <form id="employeeForm" class="text-center">
+                            <input class="mb-2 form-control" type="text" id="employeeId" placeholder="Enter Employee ID" required>
+                            <input class="mb-2 form-control" type="text" id="lastName" placeholder="Enter Last Name" required>
+                            <input class="mb-2 form-control" type="text" id="firstName" placeholder="Enter First Name" required>
+                            <input class="mb-2 form-control" type="text" id="position" placeholder="Enter Position" required>
+                            <input class="mb-3 form-control" type="text" id="office" placeholder="Enter Office" required>
+                            <button type="submit" class="btn btn-success font-monospace">Save</button>
+                        </form>
+                    </div>
+                    <div class="modal-footer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const form = document.getElementById('employeeForm');
+        const tableBody = document.getElementById('employeeTableBody');
+        const searchInput = document.getElementById('search');
+
+        function getEmployees() {
+            const data = localStorage.getItem('employees');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveEmployees(employees) {
+            localStorage.setItem('employees', JSON.stringify(employees));
+        }
+
+        function renderEmployees() {
+            const employees = getEmployees();
+            tableBody.innerHTML = '';
+            employees.forEach(emp => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${emp.id}</td>
+                    <td>${emp.lastName}</td>
+                    <td>${emp.firstName}</td>
+                    <td>${emp.position}</td>
+                    <td>${emp.office}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success me-2" onclick="editRow(this)">Edit</button>
+                        <button class="btn btn-sm btn-secondary" onclick="deleteRow(this)">Delete</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id = document.getElementById('employeeId').value;
+            const lastName = document.getElementById('lastName').value;
+            const firstName = document.getElementById('firstName').value;
+            const position = document.getElementById('position').value;
+            const office = document.getElementById('office').value;
+
+            const employees = getEmployees();
+            const existingEmployeeIndex = employees.findIndex(emp => emp.id === id);
+
+            if (existingEmployeeIndex !== -1) {
+                // Update existing employee
+                employees[existingEmployeeIndex] = { id, lastName, firstName, position, office };
+            } else {
+                // Add new employee
+                employees.push({ id, lastName, firstName, position, office });
+            }
+
+            saveEmployees(employees);
+            renderEmployees();
+            form.reset();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('myModal'));
+            modal.hide();
+        });
+
+        function editRow(button) {
+            const row = button.closest('tr');
+            const cells = row.querySelectorAll('td');
+            document.getElementById('employeeId').value = cells[0].textContent;
+            document.getElementById('lastName').value = cells[1].textContent;
+            document.getElementById('firstName').value = cells[2].textContent;
+            document.getElementById('position').value = cells[3].textContent;
+            document.getElementById('office').value = cells[4].textContent;
+
+            // Don't delete the row, just show the modal for editing
+            const modal = new bootstrap.Modal(document.getElementById('myModal'));
+            modal.show();
+        }
+
+        function deleteRow(button) {
+            if (confirm("Are you sure you want to delete this employee?")) {
+                const row = button.closest('tr');
+                const id = row.children[0].textContent;
+                let employees = getEmployees();
+                employees = employees.filter(emp => emp.id !== id);
+                saveEmployees(employees);
+                renderEmployees();
+            }
+        }
+
+        searchInput.addEventListener('keyup', function () {
+            const query = searchInput.value.toLowerCase();
+            const rows = tableBody.getElementsByTagName('tr');
+            Array.from(rows).forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+
+        window.onload = renderEmployees;
+    </script>
+</body>
+
+</html>

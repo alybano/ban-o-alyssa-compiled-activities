@@ -1,0 +1,24 @@
+/* Styling for the Facebook button */
+.facebook-btn {
+    background-color: #1877F2; /* Facebook Blue */
+    color: rgb(18, 79, 220);
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    padding: 12px 20px;
+    width: 300px; /* Button width */
+    height: 60px; /* Button height */
+    border-radius: 0; /* Perfect rectangle */
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+/* Hover effect (changes color on hover) */
+.facebook-btn:hover {
+    background-color: #145DBF;
+}
+
+/* Active/Selected effect */
+.facebook-btn:active {
+    background-color: #0E4DA4; 
+}

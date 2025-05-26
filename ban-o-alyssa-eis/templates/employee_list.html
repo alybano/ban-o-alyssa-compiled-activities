@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee List - Employee Information System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: monospace;
+            background-color: #f8f9fa;
+        }
+
+        /* Topbar */
+        .topbar {
+            background-color: #198754;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+        }
+
+        .topbar .brand {
+            flex: 1;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .topbar {
+            background-color: #198754;
+            color: white;
+            padding: 0.5rem 1rem;
+            position: fixed;
+            width: 100%;
+            z-index: 1001;
+            height: 50px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #198754;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: -250px;
+            transition: all 0.3s;
+            z-index: 999;
+            padding-top: 60px;
+
+        }
+
+        .sidebar.show {
+            left: 0;
+        }
+
+        /* Sidebar nav item hover and active effect */
+        .sidebar .nav-link {
+            padding: 10px 20px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-radius: 0 25px 25px 0;
+            color: white;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: #595b59;
+            color: #fff;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: #146c43;
+            font-weight: bold;
+            color: #fff !important;
+        }
+
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            margin-left: 0;
+            transition: margin-left 0.4s ease-in-out;
+        }
+
+        .main-content.shifted {
+            margin-left: 250px;
+        }
+
+        .burger {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .content-box {
+            background-color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .modal-body.bg-success input,
+        .modal-body.bg-success button {
+            background-color: #ffffff;
+            color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Topbar -->
+    <div class="topbar d-flex align-items-center justify-content-between px-3 bg-success">
+        <span class="burger" onclick="toggleSidebar()">☰</span>
+        <h5 class="m-0 font-monospace fw-bold" style="position: absolute; left: 600px; z-index: 999;">Employee
+            Management System</h5>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar"> 
+        <nav class="nav flex-column">
+            <a class="nav-link text-light" href="/home">Dashboard</a>
+            <a class="nav-link active text-light" href="/employee-list">Employee List</a>
+            <a class="nav-link text-light" href="/attendance_record">Attendance Record</a>
+            <a class="nav-link text-light" href="/automated_payroll">Automated Payroll</a>
+            <a class="nav-link text-danger" href="/logout">Logout</a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="main-content">
+        <h5 class="fw-bold text-start mb-4">Employee List</h5>
+        <div class="content-box text-center">
+
+            <div class="d-flex justify-content-between mb-4">
+                <input class="form-control w-75" type="text" id="employeeSearch" placeholder="Search"
+                    onkeyup="searchEmployeeTable()" />
+                <button class="btn btn-outline-secondary ms-2 font-monospace" data-bs-toggle="modal"
+                    data-bs-target="#addModal">Add Employee</button>
+            </div>
+
+            <table class="table table-bordered table-hover" id="employeeTable">
+                <thead class="table-success">
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Middle Name</th>
+                        <th>Position</th>
+                        <th>Office</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee[0] }}</td>
+                        <td>{{ employee[1] }}</td>
+                        <td>{{ employee[2] }}</td>
+                        <td>{{ employee[3] }}</td>
+                        <td>{{ employee[4] }}</td>
+                        <td>{{ employee[5] }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editModal"
+                                data-id="{{ employee[0] }}" data-lastname="{{ employee[1] }}"
+                                data-firstname="{{ employee[2] }}" data-middlename="{{ employee[3] }}"
+                                data-position="{{ employee[4] }}" data-office="{{ employee[5] }}">
+                                Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                data-id="{{ employee[0] }}">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Modal -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header font-monospace">
+                    <h5 class="modal-title">Add Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-success">
+                    <input class="form-control mb-2" type="text" id="addLastname" placeholder="Enter Last Name">
+                    <input class="form-control mb-2" type="text" id="addFirstname" placeholder="Enter First Name">
+                    <input class="form-control mb-2" type="text" id="addMiddlename" placeholder="Enter Middle Name">
+                    <input class="form-control mb-2" type="text" id="addPosition" placeholder="Enter Position">
+                    <input class="form-control mb-3" type="text" id="addOffice" placeholder="Enter Office">
+                    <button class="btn btn-outline-light w-100 font-monospace" id="saveEmployeeBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header font-monospace">
+                    <h5 class="modal-title">Edit Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-success">
+                    <input class="form-control mb-2" type="text" id="editEmployeeId" disabled>
+                    <input class="form-control mb-2" type="text" id="editLastname">
+                    <input class="form-control mb-2" type="text" id="editFirstname">
+                    <input class="form-control mb-2" type="text" id="editMiddlename">
+                    <input class="form-control mb-2" type="text" id="editPosition">
+                    <input class="form-control mb-3" type="text" id="editOffice">
+                    <button class="btn btn-outline-light w-100 font-monospace" id="editEmployeeSaveBtn">Save
+                        Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header font-monospace">
+                    <h5 class="modal-title">Delete Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-success text-center">
+                    <p>Are you sure you want to delete this employee?</p>
+                    <button class="btn btn-outline-light font-monospace" id="deleteEmployeeBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        let employeeIdToDelete = null;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            sidebar.classList.toggle('show');
+            mainContent.classList.toggle('shifted');
+        }
+
+        // Fill edit modal with selected employee data
+        const editModal = document.getElementById('editModal');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            document.getElementById('editEmployeeId').value = button.getAttribute('data-id');
+            document.getElementById('editLastname').value = button.getAttribute('data-lastname');
+            document.getElementById('editFirstname').value = button.getAttribute('data-firstname');
+            document.getElementById('editMiddlename').value = button.getAttribute('data-middlename');
+            document.getElementById('editPosition').value = button.getAttribute('data-position');
+            document.getElementById('editOffice').value = button.getAttribute('data-office');
+        });
+
+        // Delete modal event listener
+        const deleteModal = document.getElementById("deleteModal");
+        deleteModal.addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+            employeeIdToDelete = button.getAttribute("data-id");
+        });
+
+        document.getElementById("deleteEmployeeBtn").addEventListener("click", function () {
+            if (!employeeIdToDelete) {
+                alert("No employee ID selected for deletion.");
+                return;
+            }
+
+            fetch('/delete-employee', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: employeeIdToDelete })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert("Failed to delete employee.");
+                    }
+                })
+                .catch(() => alert("Error occurred while deleting employee."));
+        });
+
+        // ADD Employee
+        document.getElementById('saveEmployeeBtn').addEventListener('click', function () {
+            const data = {
+                lastname: document.getElementById('addLastname').value,
+                firstname: document.getElementById('addFirstname').value,
+                middlename: document.getElementById('addMiddlename').value,
+                position: document.getElementById('addPosition').value,
+                office: document.getElementById('addOffice').value
+            };
+
+            fetch('/add-employee', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert("Failed to add employee.");
+                }
+            });
+        });
+
+        // EDIT Employee
+        document.getElementById('editEmployeeSaveBtn').addEventListener('click', function () {
+            const data = {
+                id: document.getElementById('editEmployeeId').value,
+                lastname: document.getElementById('editLastname').value,
+                firstname: document.getElementById('editFirstname').value,
+                middlename: document.getElementById('editMiddlename').value,
+                position: document.getElementById('editPosition').value,
+                office: document.getElementById('editOffice').value
+            };
+
+            fetch('/edit-employee', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert("Failed to update employee.");
+                }
+            });
+        });
+
+        // Search Function
+        function searchEmployeeTable() {
+            const input = document.getElementById("employeeSearch").value.toUpperCase();
+            const table = document.getElementById("employeeTable");
+            const tr = table.getElementsByTagName("tr");
+            for (let i = 1; i < tr.length; i++) {
+                let visible = false;
+                const td = tr[i].getElementsByTagName("td");
+                for (let j = 0; j < td.length - 1; j++) {
+                    if (td[j].textContent.toUpperCase().indexOf(input) > -1) {
+                        visible = true;
+                        break;
+                    }
+                }
+                tr[i].style.display = visible ? "" : "none";
+            }
+        }
+
+        // Offcanvas sidebar initialization
+        document.addEventListener("DOMContentLoaded", () => {
+            const offcanvasElements = document.querySelectorAll('.offcanvas');
+            offcanvasElements.forEach(el => {
+                new bootstrap.Offcanvas(el);
+            });
+        });
+    </script>
+
+</body>
+
+</html>
